@@ -3,7 +3,7 @@
 
 <p align="center">
   </br></br>
-  <a href="https://github.com/dessant/buster-client/releases/download/v0.1.0/buster-client-v0.1.0-windows-amd64">
+  <a href="https://github.com/dessant/buster-client/releases/download/v0.1.0/buster-client-v0.1.0-windows-amd64.exe">
     <img src="https://i.imgur.com/8y9ep17.png" alt="Windows"></a>
   <a href="https://github.com/dessant/buster-client/releases/download/v0.1.0/buster-client-v0.1.0-linux-amd64">
     <img src="https://i.imgur.com/ewvx5hO.png" alt="Linux"></a>
