@@ -1,5 +1,5 @@
 # update VERSION before running `make release`
-VERSION := 0.0.0
+VERSION := 0.1.0
 
 BASE_DIR := $(shell pwd)
 BUILD_DIR := $(BASE_DIR)/build
