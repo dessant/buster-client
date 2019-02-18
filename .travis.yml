@@ -1,0 +1,46 @@
+language: go
+go: 1.11.5
+
+env:
+  global:
+    - GO111MODULE=on
+
+jobs:
+  fast_finish: true
+  include:
+    - stage: build
+      name: linux/amd64
+      install: sudo apt-get install -y libx11-dev xorg-dev libxtst-dev libpng++-dev xcb libxcb-xkb-dev x11-xkb-utils libx11-xcb-dev libxkbcommon-x11-dev libxkbcommon-dev xsel xclip
+      script: make GOOS=linux GOARCH=amd64 installer
+      os: linux
+      dist: xenial
+    - stage: build
+      name: macos/amd64
+      script: make GOOS=darwin GOARCH=amd64 installer
+      os: osx
+      osx_image: xcode8.3
+    - stage: build
+      name: windows/amd64
+      script: mingw32-make GOOS=windows GOARCH=amd64 installer
+      os: windows
+      deploy:
+        provider: script
+        script: bash -c 'curl -H "Max-Downloads:1" -H "Max-Days:1" --upload-file dist/"$(ls dist | head -1)" https://transfer.sh 2>&1 | tee upload.log && cat upload.log'
+        skip_cleanup: true
+        on:
+          tags: true
+
+deploy:
+  provider: releases
+  api_key:
+    secure: "EGic32yf2SS4HbGufCjj/dgLxxCZJ0CwWYfX7VO6sRXsuqm0h0lZk7k1cMh7XHq70vaUv6NKdPono+jBdE+tCvMkhTFvesXPX8QDXSw4yDHOnqAz5xFAGDJ9q6opE519zBDTV7FyRvIJxESRKcEK6EVFK/FQ4ejnB53aKWhmtbLcsCNBhFXdeJeqRUXocGCRXBGS0XOdvQ4LQSrFsvKZmthLNKgZzgyv4uBqieIA98/GxObtiiWvXWHa4AHqXtNIH/roK8Uo+EfwwnIArOvoByQVUaYZsXOmLmRoW/bkPwDjYI7Zajxg2VpMtBOOwOIaQtLpscCFduQ+nmmWmZggTmPFvtJ+Fs5g53z2MCsuYwm/ujoZTLS234f+ajFvnjsM+Bj+B0SeD5kKHT8q8Hr6DzllX6PMLrku8awKhbNtHn2NSBnOBWUfIxrPIW3+XQP+ctJ/AYV1Cc0siNcZKz0T7vM6hDAaC/h2FPAuMUJzDr8ey30T3w8tyWEftpH3qcrE01CXdTPpJ8z4HOEUPVeRbAWWdPT4Yzg7wr5xFmYjRHzpVgEf4bI/ubMosAx27BsCF85pTRkanbCj92+W5ZnQ2oKUs3irkTp6MCkTAzt+QW7igHcTs5c6uCf1ZsyigvqombVaoDeNmJYo1vQpcxT75nRF+1nGxQEdIFylDeFt5TA="
+  draft: true
+  file: dist/*
+  file_glob: true
+  overwrite: true
+  skip_cleanup: true
+  on:
+    tags: true
+    # Windows hangs if a secret is present
+    # https://travis-ci.community/t/current-known-issues-please-read-this-before-posting-a-new-topic/264/10
+    condition: "$TRAVIS_OS_NAME != windows"
