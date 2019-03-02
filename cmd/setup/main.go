@@ -275,6 +275,18 @@ func installHandler(res http.ResponseWriter, req *http.Request) {
 			}
 
 			res.WriteHeader(http.StatusOK)
+		} else {
+			panic(http.ErrAbortHandler)
+		}
+	} else {
+		panic(http.ErrAbortHandler)
+	}
+}
+
+func closeHandler(res http.ResponseWriter, req *http.Request) {
+	if req.Method == "POST" {
+		if isValidSession(req.FormValue("session")) {
+			res.WriteHeader(http.StatusOK)
 			go exit()
 		} else {
 			panic(http.ErrAbortHandler)
@@ -305,6 +317,7 @@ func main() {
 	mux.HandleFunc("/buster/setup", initHandler)
 	mux.HandleFunc("/api/v1/setup/location", locationHandler)
 	mux.HandleFunc("/api/v1/setup/install", installHandler)
+	mux.HandleFunc("/api/v1/setup/close", closeHandler)
 	mux.HandleFunc("/", notFoundHandler)
 
 	server = &http.Server{
