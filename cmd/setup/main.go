@@ -15,6 +15,8 @@ import (
 	"time"
 
 	"github.com/dessant/open-golang/open"
+
+	"buster-client/utils"
 )
 
 const initResponse = `<!DOCTYPE html>
@@ -84,83 +86,59 @@ func getExecutableName(name string) string {
 }
 
 func getLocation(browser, targetEnv string) (map[string]string, error) {
+	admin, err := utils.UserAdmin()
+	if err != nil {
+		return nil, errors.New("cannot inspect current user")
+	}
+	if admin {
+		return nil, errors.New("setup must be run without administrative rights")
+	}
+
 	location := map[string]string{
 		"appDir":      "",
 		"manifestDir": "",
 	}
 
 	if runtime.GOOS == "linux" {
-		user, err := user.Current()
+		usr, err := user.Current()
 		if err != nil {
 			return nil, errors.New("cannot get current user")
 		}
+		home := usr.HomeDir
 
-		manifestDir := map[string]string{}
-
-		if user.Username == "root" {
-			manifestDir = map[string]string{
-				"chrome":   "/etc/opt/chrome/native-messaging-hosts",
-				"firefox":  "/usr/lib/mozilla/native-messaging-hosts",
-				"opera":    "/etc/opt/chrome/native-messaging-hosts",
-				"chromium": "/etc/chromium/native-messaging-hosts",
-			}
-			location["appDir"] = "/opt/buster"
-		} else {
-			home := user.HomeDir
-
-			manifestDir = map[string]string{
-				"chrome":   filepath.Join(home, ".config/google-chrome/NativeMessagingHosts"),
-				"firefox":  filepath.Join(home, ".mozilla/native-messaging-hosts"),
-				"chromium": filepath.Join(home, ".config/chromium/NativeMessagingHosts"),
-			}
-			location["appDir"] = filepath.Join(home, ".local/opt/buster")
+		manifestDir := map[string]string{
+			"chrome":   filepath.Join(home, ".config/google-chrome/NativeMessagingHosts"),
+			"firefox":  filepath.Join(home, ".mozilla/native-messaging-hosts"),
+			"opera":    filepath.Join(home, ".config/google-chrome/NativeMessagingHosts"),
+			"chromium": filepath.Join(home, ".config/chromium/NativeMessagingHosts"),
 		}
-
 		manifest := manifestDir[browser]
 		if manifest == "" {
 			manifest = manifestDir[targetEnv]
 		}
 
-		isPath, err := pathExists(manifest)
-		if isPath && err == nil {
-			location["manifestDir"] = manifest
-		}
+		location["appDir"] = filepath.Join(home, ".local/opt/buster")
+		location["manifestDir"] = manifest
 	} else if runtime.GOOS == "darwin" {
-		user, err := user.Current()
+		usr, err := user.Current()
 		if err != nil {
 			return nil, errors.New("cannot get current user")
 		}
+		home := usr.HomeDir
 
-		manifestDir := map[string]string{}
-
-		if user.Username == "root" {
-			manifestDir = map[string]string{
-				"chrome":   "/Library/Google/Chrome/NativeMessagingHosts",
-				"firefox":  "/Library/Application Support/Mozilla/NativeMessagingHosts",
-				"chromium": "/Library/Application Support/Chromium/NativeMessagingHosts",
-			}
-			location["appDir"] = "/opt/buster"
-		} else {
-			home := user.HomeDir
-
-			manifestDir = map[string]string{
-				"chrome":   filepath.Join(home, "Library/Application Support/Google/Chrome/NativeMessagingHosts"),
-				"firefox":  filepath.Join(home, "Library/Application Support/Mozilla/NativeMessagingHosts"),
-				"opera":    filepath.Join(home, "Library/Application Support/Google/Chrome/NativeMessagingHosts"),
-				"chromium": filepath.Join(home, "Library/Application Support/Chromium/NativeMessagingHosts"),
-			}
-			location["appDir"] = filepath.Join(home, ".local/opt/buster")
+		manifestDir := map[string]string{
+			"chrome":   filepath.Join(home, "Library/Application Support/Google/Chrome/NativeMessagingHosts"),
+			"firefox":  filepath.Join(home, "Library/Application Support/Mozilla/NativeMessagingHosts"),
+			"opera":    filepath.Join(home, "Library/Application Support/Google/Chrome/NativeMessagingHosts"),
+			"chromium": filepath.Join(home, "Library/Application Support/Chromium/NativeMessagingHosts"),
 		}
-
 		manifest := manifestDir[browser]
 		if manifest == "" {
 			manifest = manifestDir[targetEnv]
 		}
 
-		isPath, err := pathExists(manifest)
-		if isPath && err == nil {
-			location["manifestDir"] = manifest
-		}
+		location["appDir"] = filepath.Join(home, ".local/opt/buster")
+		location["manifestDir"] = manifest
 	} else if runtime.GOOS == "windows" {
 		localAppDataDir := os.Getenv("LOCALAPPDATA")
 		appDir := filepath.Join(localAppDataDir, "buster")

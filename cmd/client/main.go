@@ -13,6 +13,8 @@ import (
 
 	"github.com/dessant/nativemessaging"
 	"github.com/go-vgo/robotgo"
+
+	"buster-client/utils"
 )
 
 var buildVersion string
@@ -36,7 +38,7 @@ type response struct {
 func initLogger() {
 	logPath := filepath.Join(os.TempDir(), "buster-client-log.txt")
 
-	logFile, err := os.OpenFile(logPath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
+	logFile, err := os.OpenFile(logPath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0666)
 	if err == nil {
 		log.SetOutput(logFile)
 		log.SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds | log.LUTC)
@@ -47,6 +49,15 @@ func initLogger() {
 }
 
 func installClient(version string) error {
+	admin, err := utils.UserAdmin()
+	if err != nil {
+		log.Println(err)
+		return errors.New("cannot inspect current user")
+	}
+	if admin {
+		return errors.New("setup must be run without administrative rights")
+	}
+
 	goos := runtime.GOOS
 	if goos == "darwin" {
 		goos = "macos"

@@ -34,10 +34,10 @@ build:
 .PHONY: setup
 setup: build $(GOBINDATA)
 	@echo "Building setup (version: $(VERSION), os: $(GOOS), arch: $(GOARCH))"
-	@rm -rf $(BUILD_DIR)/src && mkdir -p $(BUILD_DIR)/src && cp -r cmd/setup $(BUILD_DIR)/src
+	@rm -rf $(BUILD_DIR)/src && mkdir -p $(BUILD_DIR)/src && cp -r cmd lib $(BUILD_DIR)/src
 	@mkdir -p $(BUILD_DIR)/bin && cp $(DIST_DIR)/buster-client-$(BIN_SUFFIX) $(BUILD_DIR)/bin/buster-client$(BIN_EXT)
-	@cd $(BUILD_DIR)/bin || exit 1 && $(GOBINDATA) -mode 0755 -o $(BUILD_DIR)/src/setup/appbin.go buster-client$(BIN_EXT)
-	@cd $(BUILD_DIR)/src/setup || exit 1 && go build -ldflags "$(SETUP_LDFLAGS)" -o $(DIST_DIR)/buster-client-setup-$(BIN_SUFFIX)
+	@cd $(BUILD_DIR)/bin || exit 1 && $(GOBINDATA) -mode 0755 -o $(BUILD_DIR)/src/cmd/setup/appbin.go buster-client$(BIN_EXT)
+	@cd $(BUILD_DIR)/src/cmd/setup || exit 1 && go build -ldflags "$(SETUP_LDFLAGS)" -o $(DIST_DIR)/buster-client-setup-$(BIN_SUFFIX)
 
 .PHONY: release
 release:
