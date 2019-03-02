@@ -10,8 +10,8 @@ github.com/davecgh/go-spew v1.1.0 h1:ZDRjVQ15GmhC3fiQ8ni8+OwkZQO4DARzQgrnXU1Liz8
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/dessant/nativemessaging v0.0.0-20161221035708-f4769a80e040 h1:iAtyLjULoA5JO13E1iNTSpOOTmuyLgpCH2htYzzibWw=
 github.com/dessant/nativemessaging v0.0.0-20161221035708-f4769a80e040/go.mod h1:VXdU1M5ArpbHXsVe4w9A+w7hWax57PMwXP88W/lS6IE=
-github.com/go-ole/go-ole v1.2.2 h1:HXmymm3IQ8iAfpqlbbUGLHd+SZrnmI4y1pv+WL/3R7c=
-github.com/go-ole/go-ole v1.2.2/go.mod h1:7FAglXiTm7HKlQRDeOQ6ZNUHidzCWXuZWq/1dTyBNF8=
+github.com/go-ole/go-ole v1.2.2 h1:QNWhweRd9D5Py2rRVboZ2L4SEoW/dyraWJCc8bgS8kE=
+github.com/go-ole/go-ole v1.2.2/go.mod h1:pnvuG7BrDMZ8ifMurTQmxwhQM/odqm9sSqNe5BUI7v4=
 github.com/go-vgo/robotgo v0.0.0-20190208124536-364f19217850 h1:RA2h9unKZMlTUufi7KngJhZ64gZosEzWDTDh3zM0s/g=
 github.com/go-vgo/robotgo v0.0.0-20190208124536-364f19217850/go.mod h1:ah4vmlCqkhQ0rwBTtZm9wR3K8l82KdlDT0QL4qQVZlI=
 github.com/lxn/win v0.0.0-20181015143721-a7f87360b10e h1:dz4TzIsrPe4XtUyhLkOLdCS8UkVwJKQu4WY8VcIwo3I=

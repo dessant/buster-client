@@ -2,18 +2,18 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
 	"runtime"
+	"time"
 
 	"github.com/dessant/nativemessaging"
 	"github.com/go-vgo/robotgo"
 )
-
-const apiVersion = "1"
 
 var buildVersion string
 
@@ -44,6 +44,49 @@ func initLogger() {
 		log.SetOutput(ioutil.Discard)
 		log.SetFlags(0)
 	}
+}
+
+func installClient(version string) error {
+	goos := runtime.GOOS
+	if goos == "darwin" {
+		goos = "macos"
+	}
+	url := fmt.Sprintf("https://github.com/dessant/buster-client/releases/download/v%s/buster-client-v%s-%s-%s", version, version, goos, runtime.GOARCH)
+	if goos == "windows" {
+		url += ".exe"
+	}
+
+	execPath, err := os.Executable()
+	if err != nil {
+		log.Println(err)
+		return errors.New("cannot get executable path")
+	}
+
+	newExecPath := execPath + ".new"
+	currentExecPath := execPath + ".old"
+
+	os.Remove(newExecPath)
+	if err := downloadFile(newExecPath, url); err != nil {
+		log.Println(err)
+		return errors.New("cannot download client")
+	}
+
+	os.Remove(currentExecPath)
+	if err := os.Rename(execPath, currentExecPath); err != nil {
+		log.Println(err)
+		return errors.New("cannot rename current client")
+	}
+
+	if err := os.Rename(newExecPath, execPath); err != nil {
+		log.Println(err)
+		if err := os.Rename(currentExecPath, execPath); err != nil {
+			log.Println(err)
+			return errors.New("cannot undo current client rename")
+		}
+		return errors.New("cannot rename new client")
+	}
+
+	return nil
 }
 
 func processMessage(msg *message, rsp *response) error {
@@ -83,6 +126,11 @@ func main() {
 	initLogger()
 	log.Printf("Starting client (version: %s)", buildVersion)
 
+	go func() {
+		<-time.After(10 * time.Minute)
+		os.Exit(0)
+	}()
+
 	decoder := nativemessaging.NewNativeJSONDecoder(os.Stdin)
 	encoder := nativemessaging.NewNativeJSONEncoder(os.Stdout)
 
@@ -102,15 +150,28 @@ func main() {
 		}
 
 		rsp.MessageID = msg.MessageID
-		rsp.APIVersion = apiVersion
+		rsp.APIVersion = buildVersion
 
-		if msg.APIVersion == apiVersion {
-			log.Println("Processing message")
-			if err := processMessage(&msg, &rsp); err == nil {
+		if msg.Command == "installClient" {
+			log.Printf("Installing client (version: %s)", msg.Data)
+			err := installClient(msg.Data)
+			if err == nil {
 				rsp.Success = true
+			} else {
+				rsp.Data = err.Error()
 			}
 		} else {
-			log.Printf("Unsupported API version (requested: %s, supported: %s)", msg.APIVersion, apiVersion)
+			if msg.APIVersion == buildVersion {
+				log.Println("Processing message")
+				err := processMessage(&msg, &rsp)
+				if err == nil {
+					rsp.Success = true
+				} else {
+					rsp.Data = err.Error()
+				}
+			} else {
+				log.Printf("Unsupported client version (requested: %s, supported: %s)", msg.APIVersion, buildVersion)
+			}
 		}
 
 		log.Println("Sending response")

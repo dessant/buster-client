@@ -21,7 +21,7 @@ const initResponse = `<!DOCTYPE html>
 <html>
   <head>
     <meta charset="utf-8">
-    <title>Buster Client - Install</title>
+    <title>Buster Client - Setup</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
       html,
@@ -179,7 +179,7 @@ func getLocation(browser, targetEnv string) (map[string]string, error) {
 }
 
 func install(manifestDir, appDir, targetEnv, extension string) error {
-	execName := getExecutableName("buster")
+	execName := getExecutableName("buster-client")
 	if err := RestoreAsset(appDir, execName); err != nil {
 		return errors.New("cannot save client executable")
 	}
@@ -324,9 +324,9 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/buster/install", initHandler)
-	mux.HandleFunc("/api/v1/install/location", locationHandler)
-	mux.HandleFunc("/api/v1/install/run", installHandler)
+	mux.HandleFunc("/buster/setup", initHandler)
+	mux.HandleFunc("/api/v1/setup/location", locationHandler)
+	mux.HandleFunc("/api/v1/setup/install", installHandler)
 	mux.HandleFunc("/", notFoundHandler)
 
 	server = &http.Server{
@@ -342,7 +342,7 @@ func main() {
 	}
 
 	session = newToken()
-	url := fmt.Sprintf("http://%s/buster/install?session=%s", listener.Addr(), session)
+	url := fmt.Sprintf("http://%s/buster/setup?session=%s", listener.Addr(), session)
 	go open.Start(url)
 
 	if err := server.Serve(listener); err != nil {

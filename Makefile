@@ -9,9 +9,10 @@ export GOOS ?= linux
 export GOARCH ?= amd64
 export GOPATH ?= $(BASE_DIR)/go
 
-BUILD_FLAGS := -s -w
+# -extldflags=-static
+SETUP_LDFLAGS := -s -w
 ifeq ($(GOOS), windows)
-	BUILD_FLAGS += -H=windowsgui
+	SETUP_LDFLAGS += -H=windowsgui
 	BIN_EXT := .exe
 endif
 
@@ -21,21 +22,22 @@ else
 	OS := $(GOOS)
 endif
 
-BIN_NAME := buster-client-v$(VERSION)-$(OS)-$(GOARCH)$(BIN_EXT)
+BIN_SUFFIX := v$(VERSION)-$(OS)-$(GOARCH)$(BIN_EXT)
 
 GOBINDATA := $(GOPATH)/bin/go-bindata
 
 .PHONY: build
 build:
-	@echo "Building package (version: $(VERSION), os: $(GOOS), arch: $(GOARCH))"
-	@cd cmd/client || exit 1 && go build -ldflags "-s -w -X=main.buildVersion=$(VERSION)" -o $(BUILD_DIR)/bin/buster$(BIN_EXT)
+	@echo "Building client (version: $(VERSION), os: $(GOOS), arch: $(GOARCH))"
+	@cd cmd/client || exit 1 && go build -ldflags "-s -w -X=main.buildVersion=$(VERSION)" -o $(DIST_DIR)/buster-client-$(BIN_SUFFIX)
 
-.PHONY: installer
-installer: build $(GOBINDATA)
-	@echo "Building installer (version: $(VERSION), os: $(GOOS), arch: $(GOARCH))"
-	@rm -rf $(BUILD_DIR)/src && mkdir -p $(BUILD_DIR)/src && cp -r cmd/installer $(BUILD_DIR)/src
-	@cd $(BUILD_DIR)/bin || exit 1 && $(GOBINDATA) -mode 0755 -o $(BUILD_DIR)/src/installer/appbin.go buster$(BIN_EXT)
-	@cd $(BUILD_DIR)/src/installer || exit 1 && go build -ldflags "$(BUILD_FLAGS)" -o $(DIST_DIR)/$(BIN_NAME)
+.PHONY: setup
+setup: build $(GOBINDATA)
+	@echo "Building setup (version: $(VERSION), os: $(GOOS), arch: $(GOARCH))"
+	@rm -rf $(BUILD_DIR)/src && mkdir -p $(BUILD_DIR)/src && cp -r cmd/setup $(BUILD_DIR)/src
+	@mkdir -p $(BUILD_DIR)/bin && cp $(DIST_DIR)/buster-client-$(BIN_SUFFIX) $(BUILD_DIR)/bin/buster-client$(BIN_EXT)
+	@cd $(BUILD_DIR)/bin || exit 1 && $(GOBINDATA) -mode 0755 -o $(BUILD_DIR)/src/setup/appbin.go buster-client$(BIN_EXT)
+	@cd $(BUILD_DIR)/src/setup || exit 1 && go build -ldflags "$(SETUP_LDFLAGS)" -o $(DIST_DIR)/buster-client-setup-$(BIN_SUFFIX)
 
 .PHONY: release
 release:

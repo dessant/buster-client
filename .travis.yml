@@ -11,24 +11,26 @@ jobs:
     - stage: build
       name: linux/amd64
       install: sudo apt-get install -y libx11-dev xorg-dev libxtst-dev libpng++-dev xcb libxcb-xkb-dev x11-xkb-utils libx11-xcb-dev libxkbcommon-x11-dev libxkbcommon-dev xsel xclip
-      script: make GOOS=linux GOARCH=amd64 installer
+      script: make GOOS=linux GOARCH=amd64 setup
       os: linux
       dist: xenial
     - stage: build
       name: macos/amd64
-      script: make GOOS=darwin GOARCH=amd64 installer
+      script: make GOOS=darwin GOARCH=amd64 setup
       os: osx
       osx_image: xcode8.3
     - stage: build
       name: windows/amd64
-      script: mingw32-make GOOS=windows GOARCH=amd64 installer
+      script: mingw32-make GOOS=windows GOARCH=amd64 setup
       os: windows
-      deploy:
-        provider: script
-        script: bash -c 'curl -H "Max-Downloads:1" -H "Max-Days:1" --upload-file dist/"$(ls dist | head -1)" https://transfer.sh 2>&1 | tee upload.log && cat upload.log'
-        skip_cleanup: true
-        on:
-          tags: true
+
+after_success:
+  - if [[ "${TRAVIS_TAG}" == v* ]]; then
+      sha256sum dist/*;
+    fi
+  - if [[ "${TRAVIS_TAG}" == v* && "${TRAVIS_OS_NAME}" == "windows" ]]; then
+      curl -H "Max-Downloads:1" -H "Max-Days:1" $(printf -- " -F filedata=@dist/%s" $(ls dist)) https://transfer.sh 2>&1 | tee upload.log && cat upload.log;
+    fi
 
 deploy:
   provider: releases
@@ -41,6 +43,6 @@ deploy:
   skip_cleanup: true
   on:
     tags: true
-    # Windows hangs if a secret is present
+    # Windows fails with secrets
     # https://travis-ci.community/t/current-known-issues-please-read-this-before-posting-a-new-topic/264/10
     condition: "$TRAVIS_OS_NAME != windows"

@@ -1,4 +1,4 @@
-module github.com/dessant/buster-client/cmd/installer
+module github.com/dessant/buster-client/cmd/setup
 
 require (
 	github.com/dessant/open-golang v0.0.0-20190104022628-a2dfa6d0dab6
