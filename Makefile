@@ -1,5 +1,4 @@
-# update VERSION before running `make release`
-VERSION := 0.1.0
+VERSION := $(shell sed -n 's/.*"version": "\(.*\)",/\1/p' package.json)
 
 BASE_DIR := $(shell pwd)
 BUILD_DIR := $(BASE_DIR)/build
@@ -24,6 +23,7 @@ endif
 BIN_SUFFIX := v$(VERSION)-$(OS)-$(GOARCH)$(BIN_EXT)
 
 GOBINDATA := $(GOPATH)/bin/go-bindata
+STANDARD_VERSION := ~/.yarn/bin/standard-version
 
 .PHONY: build
 build:
@@ -39,10 +39,12 @@ setup: build $(GOBINDATA)
 	@cd $(BUILD_DIR)/src/cmd/setup || exit 1 && go build -ldflags "$(SETUP_LDFLAGS)" -o $(DIST_DIR)/buster-client-setup-$(BIN_SUFFIX)
 
 .PHONY: release
-release:
-	@echo "Releasing version ($(VERSION))"
-	@git add Makefile && git commit -m "chore(release): $(VERSION)" && git tag v$(VERSION)
+release: $(STANDARD_VERSION)
+	@$(STANDARD_VERSION)
 	@git push --follow-tags origin master
 
 $(GOBINDATA):
 	@GO111MODULE=off go get -u github.com/dessant/go-bindata/...
+
+$(STANDARD_VERSION):
+	@yarn global add standard-version
