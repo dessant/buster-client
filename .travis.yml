@@ -1,10 +1,3 @@
-language: go
-go: 1.11.5
-
-env:
-  global:
-    - GO111MODULE=on
-
 jobs:
   fast_finish: true
   include:
@@ -14,6 +7,7 @@ jobs:
       script: docker run --init --rm --mount type=bind,source="${PWD}",target=/src ci make GOOS=linux GOARCH=amd64 setup
       os: linux
       dist: xenial
+      language: generic
       services:
         - docker
     - stage: build
@@ -21,14 +15,24 @@ jobs:
       script: make GOOS=darwin GOARCH=amd64 setup
       os: osx
       osx_image: xcode8.3
+      language: go
+      go: 1.11.5
+      env: GO111MODULE=on
     - stage: build
       name: windows/amd64
       script: mingw32-make GOOS=windows GOARCH=amd64 setup
       os: windows
+      language: go
+      go: 1.11.5
+      env: GO111MODULE=on
 
 after_success:
   - if [[ "${TRAVIS_TAG}" == v* ]]; then
-      sha256sum dist/*;
+      if [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then
+        shasum -a 256 dist/*;
+      else
+        sha256sum dist/*;
+      fi
     fi
   - if [[ "${TRAVIS_TAG}" == v* && "${TRAVIS_OS_NAME}" == "windows" ]]; then
       curl -H "Max-Downloads:1" -H "Max-Days:1" $(printf -- " -F filedata=@dist/%s" $(ls dist)) https://transfer.sh 2>&1 | tee upload.log && cat upload.log;
