@@ -4,10 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
-	"path/filepath"
 	"runtime"
 	"time"
 
@@ -33,19 +31,6 @@ type response struct {
 	APIVersion string `json:"apiVersion"`
 	Success    bool   `json:"success"`
 	Data       string `json:"data"`
-}
-
-func initLogger() {
-	logPath := filepath.Join(os.TempDir(), "buster-client-log.txt")
-
-	logFile, err := os.OpenFile(logPath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0666)
-	if err == nil {
-		log.SetOutput(logFile)
-		log.SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds | log.LUTC)
-	} else {
-		log.SetOutput(ioutil.Discard)
-		log.SetFlags(0)
-	}
 }
 
 func installClient(version string) error {
@@ -134,11 +119,12 @@ func processMessage(msg *message, rsp *response) error {
 }
 
 func main() {
-	initLogger()
+	utils.InitLogger("buster-client-log.txt")
 	log.Printf("Starting client (version: %s)", buildVersion)
 
 	go func() {
 		<-time.After(10 * time.Minute)
+		log.Println("Closing client (forced)")
 		os.Exit(0)
 	}()
 

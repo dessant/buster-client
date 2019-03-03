@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net"
 	"net/http"
 	"os"
@@ -50,7 +51,7 @@ const initResponse = `<!DOCTYPE html>
     </style>
   </head>
   <body>
-    <div id="notice" class="hidden">Open this page in a browser with <a href="https://github.com/dessant/buster" target="_blank" rel="noreferrer">Buster</a> installed.</div>
+    <div id="notice" class="hidden">Open this page in a browser with the latest version of <a href="https://github.com/dessant/buster" target="_blank" rel="noreferrer">Buster</a> installed.</div>
     <script>
       window.setTimeout(() => {
         document.querySelector('#notice').classList.remove('hidden');
@@ -59,6 +60,8 @@ const initResponse = `<!DOCTYPE html>
   </body>
 </html>
 `
+
+var buildVersion string
 
 var server *http.Server
 var shutdown = make(chan bool)
@@ -88,6 +91,7 @@ func getExecutableName(name string) string {
 func getLocation(browser, targetEnv string) (map[string]string, error) {
 	admin, err := utils.UserAdmin()
 	if err != nil {
+		log.Println(err)
 		return nil, errors.New("cannot inspect current user")
 	}
 	if admin {
@@ -102,6 +106,7 @@ func getLocation(browser, targetEnv string) (map[string]string, error) {
 	if runtime.GOOS == "linux" {
 		usr, err := user.Current()
 		if err != nil {
+			log.Println(err)
 			return nil, errors.New("cannot get current user")
 		}
 		home := usr.HomeDir
@@ -122,6 +127,7 @@ func getLocation(browser, targetEnv string) (map[string]string, error) {
 	} else if runtime.GOOS == "darwin" {
 		usr, err := user.Current()
 		if err != nil {
+			log.Println(err)
 			return nil, errors.New("cannot get current user")
 		}
 		home := usr.HomeDir
@@ -159,12 +165,14 @@ func getLocation(browser, targetEnv string) (map[string]string, error) {
 func install(manifestDir, appDir, targetEnv, extension string) error {
 	execName := getExecutableName("buster-client")
 	if err := RestoreAsset(appDir, execName); err != nil {
+		log.Println(err)
 		return errors.New("cannot save client executable")
 	}
 
 	manifestPath := filepath.Join(manifestDir, "org.buster.client.json")
 	isPath, err := pathExists(manifestPath)
 	if err != nil {
+		log.Println(err)
 		return errors.New("cannot check manifest file")
 	}
 
@@ -202,15 +210,18 @@ func install(manifestDir, appDir, targetEnv, extension string) error {
 	}
 
 	if err := os.MkdirAll(manifestDir, 0755); err != nil {
+		log.Println(err)
 		return errors.New("cannot create manifest directory")
 	}
 	manifestJSON, _ := json.MarshalIndent(manifestData, "", "  ")
 	if err := ioutil.WriteFile(manifestPath, manifestJSON, 0644); err != nil {
+		log.Println(err)
 		return errors.New("cannot save manifest file")
 	}
 
 	if runtime.GOOS == "windows" {
 		if err := setManifestRegistry(targetEnv, manifestPath); err != nil {
+			log.Println(err)
 			return errors.New("cannot set registry value")
 		}
 	}
@@ -229,6 +240,7 @@ func initHandler(res http.ResponseWriter, req *http.Request) {
 		if isValidSession(req.FormValue("session")) {
 			res.Header().Set("Content-Security-Policy", "frame-ancestors 'none';")
 			res.Header().Set("Content-Type", "text/html; charset=utf-8")
+			log.Println("Loading setup page")
 			fmt.Fprint(res, initResponse)
 		} else {
 			panic(http.ErrAbortHandler)
@@ -244,6 +256,7 @@ func locationHandler(res http.ResponseWriter, req *http.Request) {
 			browser := req.FormValue("browser")
 			targetEnv := req.FormValue("targetEnv")
 
+			log.Println("Getting install location")
 			location, err := getLocation(browser, targetEnv)
 			if err != nil {
 				writeError(res, err)
@@ -269,6 +282,7 @@ func installHandler(res http.ResponseWriter, req *http.Request) {
 			targetEnv := req.FormValue("targetEnv")
 			extension := req.FormValue("extension")
 
+			log.Println("Installing client")
 			if err := install(manifestDir, appDir, targetEnv, extension); err != nil {
 				writeError(res, err)
 				return
@@ -287,6 +301,7 @@ func closeHandler(res http.ResponseWriter, req *http.Request) {
 	if req.Method == "POST" {
 		if isValidSession(req.FormValue("session")) {
 			res.WriteHeader(http.StatusOK)
+			log.Println("Closing setup")
 			go exit()
 		} else {
 			panic(http.ErrAbortHandler)
@@ -307,8 +322,12 @@ func exit() {
 }
 
 func main() {
+	utils.InitLogger("buster-client-setup-log.txt")
+	log.Printf("Starting setup (version: %s)", buildVersion)
+
 	go func() {
 		<-time.After(10 * time.Minute)
+		log.Println("Closing setup (forced)")
 		exit()
 	}()
 
@@ -329,7 +348,8 @@ func main() {
 
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
-		panic(err)
+		log.Println(err)
+		return
 	}
 
 	session = newToken()
@@ -340,7 +360,7 @@ func main() {
 		if err == http.ErrServerClosed {
 			<-shutdown
 		} else {
-			panic(err)
+			log.Println(err)
 		}
 	}
 }
