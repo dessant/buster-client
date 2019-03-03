@@ -8,9 +8,8 @@ export GOOS ?= linux
 export GOARCH ?= amd64
 export GOPATH ?= $(BASE_DIR)/go
 
-SETUP_LDFLAGS := -s -w
 ifeq ($(GOOS), windows)
-	SETUP_LDFLAGS += -H=windowsgui
+	SETUP_LDFLAGS := -H=windowsgui
 	BIN_EXT := .exe
 endif
 
@@ -28,7 +27,7 @@ STANDARD_VERSION := ~/.yarn/bin/standard-version
 .PHONY: build
 build:
 	@echo "Building client (version: $(VERSION), os: $(GOOS), arch: $(GOARCH))"
-	@cd cmd/client || exit 1 && go build -ldflags "-s -w -X=main.buildVersion=$(VERSION)" -o $(DIST_DIR)/buster-client-$(BIN_SUFFIX)
+	@cd cmd/client || exit 1 && go build -ldflags "-X=main.buildVersion=$(VERSION)" -o $(DIST_DIR)/buster-client-$(BIN_SUFFIX)
 
 .PHONY: setup
 setup: build $(GOBINDATA)
