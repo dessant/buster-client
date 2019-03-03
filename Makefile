@@ -9,7 +9,6 @@ export GOOS ?= linux
 export GOARCH ?= amd64
 export GOPATH ?= $(BASE_DIR)/go
 
-# -extldflags=-static
 SETUP_LDFLAGS := -s -w
 ifeq ($(GOOS), windows)
 	SETUP_LDFLAGS += -H=windowsgui

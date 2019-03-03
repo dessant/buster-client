@@ -10,10 +10,12 @@ jobs:
   include:
     - stage: build
       name: linux/amd64
-      install: sudo apt-get install -y libx11-dev xorg-dev libxtst-dev libpng++-dev xcb libxcb-xkb-dev x11-xkb-utils libx11-xcb-dev libxkbcommon-x11-dev libxkbcommon-dev xsel xclip
-      script: make GOOS=linux GOARCH=amd64 setup
+      install: docker build --tag ci .
+      script: docker run --init --rm --mount type=bind,source="${PWD}",target=/src ci make GOOS=linux GOARCH=amd64 setup
       os: linux
       dist: xenial
+      services:
+        - docker
     - stage: build
       name: macos/amd64
       script: make GOOS=darwin GOARCH=amd64 setup
