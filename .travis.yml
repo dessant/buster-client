@@ -35,7 +35,7 @@ after_success:
       fi
     fi
   - if [[ "${TRAVIS_TAG}" == v* && "${TRAVIS_OS_NAME}" == "windows" ]]; then
-      curl -H "Max-Downloads:1" -H "Max-Days:1" --upload-file dist/"$(ls dist | head -1)" https://transfer.sh 2>&1 | tee upload.log && cat upload.log;
+      curl -F "file=@$(ls dist/buster-client-setup-*)" https://file.io?expires=1d 2>&1 | tee upload.log && cat upload.log;
     fi
 
 deploy:
