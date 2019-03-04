@@ -43,3 +43,10 @@ func InitLogger(file string) {
 		log.SetFlags(0)
 	}
 }
+
+func GetExecName(name string) string {
+	if runtime.GOOS == "windows" {
+		return name + ".exe"
+	}
+	return name
+}

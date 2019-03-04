@@ -6,6 +6,8 @@ import (
 	"io"
 	"log"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"runtime"
 	"time"
 
@@ -47,7 +49,7 @@ func installClient(version string) error {
 	if goos == "darwin" {
 		goos = "macos"
 	}
-	url := fmt.Sprintf("https://github.com/dessant/buster-client/releases/download/v%s/buster-client-v%s-%s-%s", version, version, goos, runtime.GOARCH)
+	url := fmt.Sprintf("https://github.com/dessant/buster-client/releases/download/v%s/buster-client-setup-v%s-%s-%s", version, version, goos, runtime.GOARCH)
 	if goos == "windows" {
 		url += ".exe"
 	}
@@ -57,30 +59,37 @@ func installClient(version string) error {
 		log.Println(err)
 		return errors.New("cannot get executable path")
 	}
+	setupPath := filepath.Join(filepath.Dir(execPath), utils.GetExecName("buster-client-setup"))
 
-	newExecPath := execPath + ".new"
-	currentExecPath := execPath + ".old"
-
-	os.Remove(newExecPath)
-	if err := downloadFile(newExecPath, url); err != nil {
+	if err := downloadFile(setupPath, url); err != nil {
 		log.Println(err)
-		return errors.New("cannot download client")
+		return errors.New("cannot download setup")
 	}
 
-	os.Remove(currentExecPath)
-	if err := os.Rename(execPath, currentExecPath); err != nil {
+	setupOutput, err := exec.Command(setupPath, "--update").CombinedOutput()
+	if err != nil {
 		log.Println(err)
-		return errors.New("cannot rename current client")
+		return errors.New("cannot run setup")
 	}
 
-	if err := os.Rename(newExecPath, execPath); err != nil {
-		log.Println(err)
-		if err := os.Rename(currentExecPath, execPath); err != nil {
-			log.Println(err)
-			return errors.New("cannot undo current client rename")
-		}
-		return errors.New("cannot rename new client")
+	os.Remove(setupPath)
+
+	errMessage := string(setupOutput)
+	if errMessage != "" {
+		return errors.New(errMessage)
 	}
+
+	return nil
+}
+
+func installCleanup() error {
+	execPath, err := os.Executable()
+	if err != nil {
+		log.Println(err)
+		return errors.New("cannot get executable path")
+	}
+
+	os.Remove(execPath + ".old")
 
 	return nil
 }
@@ -123,7 +132,7 @@ func main() {
 	log.Printf("Starting client (version: %s)", buildVersion)
 
 	go func() {
-		<-time.After(10 * time.Minute)
+		<-time.After(12 * time.Minute)
 		log.Println("Closing client (forced)")
 		os.Exit(0)
 	}()
@@ -152,6 +161,14 @@ func main() {
 		if msg.Command == "installClient" {
 			log.Printf("Installing client (version: %s)", msg.Data)
 			err := installClient(msg.Data)
+			if err == nil {
+				rsp.Success = true
+			} else {
+				rsp.Data = err.Error()
+			}
+		} else if msg.Command == "installCleanup" {
+			log.Println("Cleaning up after installation")
+			err := installCleanup()
 			if err == nil {
 				rsp.Success = true
 			} else {

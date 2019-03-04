@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -65,6 +66,7 @@ var buildVersion string
 
 var server *http.Server
 var shutdown = make(chan bool)
+var updating *bool
 
 var session string
 
@@ -79,13 +81,6 @@ type manifest struct {
 
 func isValidSession(key string) bool {
 	return key == session
-}
-
-func getExecutableName(name string) string {
-	if runtime.GOOS == "windows" {
-		return name + ".exe"
-	}
-	return name
 }
 
 func getLocation(browser, targetEnv string) (map[string]string, error) {
@@ -147,26 +142,29 @@ func getLocation(browser, targetEnv string) (map[string]string, error) {
 		location["manifestDir"] = manifest
 	} else if runtime.GOOS == "windows" {
 		localAppDataDir := os.Getenv("LOCALAPPDATA")
-		appDir := filepath.Join(localAppDataDir, "buster")
-		var manifestSubDir string
-		if targetEnv == "firefox" {
-			manifestSubDir = "firefox"
-		} else {
-			manifestSubDir = "chrome"
-		}
 
-		location["appDir"] = appDir
-		location["manifestDir"] = filepath.Join(appDir, "manifest", manifestSubDir)
+		location["appDir"] = filepath.Join(localAppDataDir, "buster")
 	}
 
 	return location, nil
 }
 
 func install(manifestDir, appDir, targetEnv, extension string) error {
-	execName := getExecutableName("buster-client")
-	if err := RestoreAsset(appDir, execName); err != nil {
+	execName := utils.GetExecName("buster-client")
+	execPath := filepath.Join(appDir, execName)
+	if err := restoreAsset(execPath, execName); err != nil {
 		log.Println(err)
-		return errors.New("cannot save client executable")
+		return errors.New("cannot unpack client")
+	}
+
+	if runtime.GOOS == "windows" {
+		var manifestSubDir string
+		if targetEnv == "firefox" {
+			manifestSubDir = "firefox"
+		} else {
+			manifestSubDir = "chrome"
+		}
+		manifestDir = filepath.Join(appDir, "manifest", manifestSubDir)
 	}
 
 	manifestPath := filepath.Join(manifestDir, "org.buster.client.json")
@@ -229,6 +227,43 @@ func install(manifestDir, appDir, targetEnv, extension string) error {
 	return nil
 }
 
+func update() error {
+	setupPath, err := os.Executable()
+	if err != nil {
+		log.Println(err)
+		return errors.New("cannot get executable path")
+	}
+
+	execName := utils.GetExecName("buster-client")
+	execPath := filepath.Join(filepath.Dir(setupPath), execName)
+
+	newExecPath := execPath + ".new"
+	currentExecPath := execPath + ".old"
+
+	if err := restoreAsset(newExecPath, execName); err != nil {
+		log.Println(err)
+		return errors.New("cannot unpack new client")
+	}
+
+	os.Remove(currentExecPath)
+	if err := os.Rename(execPath, currentExecPath); err != nil {
+		log.Println(err)
+		return errors.New("cannot rename current client")
+	}
+
+	if err := os.Rename(newExecPath, execPath); err != nil {
+		log.Println(err)
+		if err := os.Rename(currentExecPath, execPath); err != nil {
+			log.Println(err)
+			return errors.New("cannot undo current client rename")
+		}
+		return errors.New("cannot rename new client")
+	}
+
+	return nil
+}
+
+
 func writeError(res http.ResponseWriter, error error) {
 	response, _ := json.Marshal(map[string]string{"error": error.Error()})
 	res.Header().Set("Content-Type", "application/json")
@@ -288,6 +323,9 @@ func installHandler(res http.ResponseWriter, req *http.Request) {
 				return
 			}
 
+			// remove legacy client
+			os.Remove(filepath.Join(appDir, utils.GetExecName("buster")))
+
 			res.WriteHeader(http.StatusOK)
 		} else {
 			panic(http.ErrAbortHandler)
@@ -328,8 +366,24 @@ func main() {
 	go func() {
 		<-time.After(10 * time.Minute)
 		log.Println("Closing setup (forced)")
+		if *updating {
+			// send error to stdout
+			fmt.Println("setup timed out")
+		}
 		exit()
 	}()
+
+	updating = flag.Bool("update", false, "update client")
+	flag.Parse()
+	if *updating {
+		log.Println("Updating client")
+		if err := update(); err != nil {
+			// send error to stdout
+			fmt.Println(err)
+		}
+		log.Println("Closing setup")
+		return
+	}
 
 	mux := http.NewServeMux()
 

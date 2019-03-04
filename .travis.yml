@@ -35,7 +35,7 @@ after_success:
       fi
     fi
   - if [[ "${TRAVIS_TAG}" == v* && "${TRAVIS_OS_NAME}" == "windows" ]]; then
-      curl -H "Max-Downloads:1" -H "Max-Days:1" $(printf -- " -F filedata=@dist/%s" $(ls dist)) https://transfer.sh 2>&1 | tee upload.log && cat upload.log;
+      curl -H "Max-Downloads:1" -H "Max-Days:1" --upload-file dist/"$(ls dist | head -1)" https://transfer.sh 2>&1 | tee upload.log && cat upload.log;
     fi
 
 deploy:
@@ -43,7 +43,7 @@ deploy:
   api_key:
     secure: "EGic32yf2SS4HbGufCjj/dgLxxCZJ0CwWYfX7VO6sRXsuqm0h0lZk7k1cMh7XHq70vaUv6NKdPono+jBdE+tCvMkhTFvesXPX8QDXSw4yDHOnqAz5xFAGDJ9q6opE519zBDTV7FyRvIJxESRKcEK6EVFK/FQ4ejnB53aKWhmtbLcsCNBhFXdeJeqRUXocGCRXBGS0XOdvQ4LQSrFsvKZmthLNKgZzgyv4uBqieIA98/GxObtiiWvXWHa4AHqXtNIH/roK8Uo+EfwwnIArOvoByQVUaYZsXOmLmRoW/bkPwDjYI7Zajxg2VpMtBOOwOIaQtLpscCFduQ+nmmWmZggTmPFvtJ+Fs5g53z2MCsuYwm/ujoZTLS234f+ajFvnjsM+Bj+B0SeD5kKHT8q8Hr6DzllX6PMLrku8awKhbNtHn2NSBnOBWUfIxrPIW3+XQP+ctJ/AYV1Cc0siNcZKz0T7vM6hDAaC/h2FPAuMUJzDr8ey30T3w8tyWEftpH3qcrE01CXdTPpJ8z4HOEUPVeRbAWWdPT4Yzg7wr5xFmYjRHzpVgEf4bI/ubMosAx27BsCF85pTRkanbCj92+W5ZnQ2oKUs3irkTp6MCkTAzt+QW7igHcTs5c6uCf1ZsyigvqombVaoDeNmJYo1vQpcxT75nRF+1nGxQEdIFylDeFt5TA="
   draft: true
-  file: dist/*
+  file: dist/buster-client-setup-*
   file_glob: true
   overwrite: true
   skip_cleanup: true
