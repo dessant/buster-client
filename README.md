@@ -26,6 +26,12 @@ please consider contributing with
 Buster Client is a native app used by the [Buster](https://github.com/dessant/buster)
 extension for user input simulation.
 
+## Installation
+
+Download the [latest release](https://github.com/dessant/buster-client/releases/latest)
+of the client app and follow the [installation guide](https://github.com/dessant/buster-client/wiki/Installing-the-client-app)
+for your operating system.
+
 ## Issues
 
 Open issues on the [main repository](https://github.com/dessant/buster)
