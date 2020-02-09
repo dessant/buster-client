@@ -52,7 +52,7 @@ const initResponse = `<!DOCTYPE html>
     </style>
   </head>
   <body>
-    <div id="notice" class="hidden">Open this page in a browser with the latest version of <a href="https://github.com/dessant/buster" target="_blank" rel="noreferrer">Buster</a> installed.</div>
+    <div id="notice" class="hidden">Open this page in a browser with the latest version of <a href="https://github.com/dessant/buster#readme" target="_blank" rel="noreferrer">Buster</a> installed.</div>
     <script>
       window.setTimeout(() => {
         document.querySelector('#notice').classList.remove('hidden');
