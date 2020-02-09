@@ -84,13 +84,15 @@ func isValidSession(key string) bool {
 }
 
 func getLocation(browser, targetEnv string) (map[string]string, error) {
-	admin, err := utils.UserAdmin()
-	if err != nil {
-		log.Println(err)
-		return nil, errors.New("cannot inspect current user")
-	}
-	if admin {
-		return nil, errors.New("setup must be run without administrative rights")
+	if runtime.GOOS != "windows" {
+		admin, err := utils.UserAdmin()
+		if err != nil {
+			log.Println(err)
+			return nil, errors.New("cannot inspect current user")
+		}
+		if admin {
+			return nil, errors.New("setup must be run without administrative rights")
+		}
 	}
 
 	location := map[string]string{

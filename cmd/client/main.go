@@ -36,13 +36,15 @@ type response struct {
 }
 
 func installClient(version string) error {
-	admin, err := utils.UserAdmin()
-	if err != nil {
-		log.Println(err)
-		return errors.New("cannot inspect current user")
-	}
-	if admin {
-		return errors.New("setup must be run without administrative rights")
+	if runtime.GOOS != "windows" {
+		admin, err := utils.UserAdmin()
+		if err != nil {
+			log.Println(err)
+			return errors.New("cannot inspect current user")
+		}
+		if admin {
+			return errors.New("setup must be run without administrative rights")
+		}
 	}
 
 	goos := runtime.GOOS
