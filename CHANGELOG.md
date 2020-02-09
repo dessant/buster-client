@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.3.0](https://github.com/dessant/buster-client/compare/v0.2.0...v0.3.0) (2020-02-09)
+
+
+### Features
+
+* expand browser support ([5b8ace7](https://github.com/dessant/buster-client/commit/5b8ace7c51bc227048e30c0de85a9ef7a64bc44e))
+* support Windows 32-bit ([c159b03](https://github.com/dessant/buster-client/commit/c159b032ee741a8355d0b0d6b73cf9159f899c09))
+
+
+### Bug Fixes
+
+* allow installation as administrator on Windows ([53775b8](https://github.com/dessant/buster-client/commit/53775b8da9c474e235ff21ad58265889bb0e7d07))
+
 # [0.2.0](https://github.com/dessant/buster-client/compare/v0.1.0...v0.2.0) (2019-03-04)
 
 
