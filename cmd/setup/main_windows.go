@@ -6,9 +6,15 @@ import (
 	"golang.org/x/sys/windows/registry"
 )
 
-func setManifestRegistry(targetEnv, manifestPath string) error {
+func setManifestRegistry(browser, targetEnv, manifestPath string) error {
 	var key string
-	if targetEnv == "firefox" {
+	if browser == "waterfox" {
+		key = `SOFTWARE\Waterfox\NativeMessagingHosts\`
+	} else if browser == "icedragon" {
+		key = `SOFTWARE\ComodoGroup\NativeMessagingHosts\`
+	} else if browser == "cliqz" {
+		key = `SOFTWARE\Cliqz\NativeMessagingHosts\`
+	} else if targetEnv == "firefox" {
 		key = `SOFTWARE\Mozilla\NativeMessagingHosts\`
 	} else {
 		key = `SOFTWARE\Google\Chrome\NativeMessagingHosts\`

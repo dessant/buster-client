@@ -2,6 +2,6 @@
 
 package main
 
-func setManifestRegistry(targetEnv, manifestPath string) error {
+func setManifestRegistry(browser, targetEnv, manifestPath string) error {
 	return nil
 }

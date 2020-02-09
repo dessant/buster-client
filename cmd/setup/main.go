@@ -109,9 +109,11 @@ func getLocation(browser, targetEnv string) (map[string]string, error) {
 		home := usr.HomeDir
 
 		manifestDir := map[string]string{
-			"chrome":   filepath.Join(home, ".config/google-chrome/NativeMessagingHosts"),
-			"firefox":  filepath.Join(home, ".mozilla/native-messaging-hosts"),
-			"opera":    filepath.Join(home, ".config/google-chrome/NativeMessagingHosts"),
+			// targets
+			"chrome":  filepath.Join(home, ".config/google-chrome/NativeMessagingHosts"),
+			"firefox": filepath.Join(home, ".mozilla/native-messaging-hosts"),
+			"opera":   filepath.Join(home, ".config/google-chrome/NativeMessagingHosts"),
+			//browsers
 			"chromium": filepath.Join(home, ".config/chromium/NativeMessagingHosts"),
 		}
 		manifest := manifestDir[browser]
@@ -130,10 +132,14 @@ func getLocation(browser, targetEnv string) (map[string]string, error) {
 		home := usr.HomeDir
 
 		manifestDir := map[string]string{
-			"chrome":   filepath.Join(home, "Library/Application Support/Google/Chrome/NativeMessagingHosts"),
-			"firefox":  filepath.Join(home, "Library/Application Support/Mozilla/NativeMessagingHosts"),
-			"opera":    filepath.Join(home, "Library/Application Support/Google/Chrome/NativeMessagingHosts"),
-			"chromium": filepath.Join(home, "Library/Application Support/Chromium/NativeMessagingHosts"),
+			// targets
+			"chrome":  filepath.Join(home, "Library/Application Support/Google/Chrome/NativeMessagingHosts"),
+			"edge":    filepath.Join(home, "Library/Application Support/Microsoft Edge/NativeMessagingHosts"),
+			"firefox": filepath.Join(home, "Library/Application Support/Mozilla/NativeMessagingHosts"),
+			"opera":   filepath.Join(home, "Library/Application Support/Google/Chrome/NativeMessagingHosts"),
+			//browsers
+			"chromium":       filepath.Join(home, "Library/Application Support/Chromium/NativeMessagingHosts"),
+			"microsoft edge": filepath.Join(home, "Library/Application Support/Microsoft Edge/NativeMessagingHosts"),
 		}
 		manifest := manifestDir[browser]
 		if manifest == "" {
@@ -151,7 +157,7 @@ func getLocation(browser, targetEnv string) (map[string]string, error) {
 	return location, nil
 }
 
-func install(manifestDir, appDir, targetEnv, extension string) error {
+func install(manifestDir, appDir, browser, targetEnv, extension string) error {
 	execName := utils.GetExecName("buster-client")
 	execPath := filepath.Join(appDir, execName)
 	if err := restoreAsset(execPath, execName); err != nil {
@@ -220,7 +226,7 @@ func install(manifestDir, appDir, targetEnv, extension string) error {
 	}
 
 	if runtime.GOOS == "windows" {
-		if err := setManifestRegistry(targetEnv, manifestPath); err != nil {
+		if err := setManifestRegistry(browser, targetEnv, manifestPath); err != nil {
 			log.Println(err)
 			return errors.New("cannot set registry value")
 		}
@@ -264,7 +270,6 @@ func update() error {
 
 	return nil
 }
-
 
 func writeError(res http.ResponseWriter, error error) {
 	response, _ := json.Marshal(map[string]string{"error": error.Error()})
@@ -316,11 +321,12 @@ func installHandler(res http.ResponseWriter, req *http.Request) {
 		if isValidSession(req.FormValue("session")) {
 			appDir := req.FormValue("appDir")
 			manifestDir := req.FormValue("manifestDir")
+			browser := req.FormValue("browser")
 			targetEnv := req.FormValue("targetEnv")
 			extension := req.FormValue("extension")
 
 			log.Println("Installing client")
-			if err := install(manifestDir, appDir, targetEnv, extension); err != nil {
+			if err := install(manifestDir, appDir, browser, targetEnv, extension); err != nil {
 				writeError(res, err)
 				return
 			}
