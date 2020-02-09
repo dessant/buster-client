@@ -12,8 +12,8 @@ import (
 	"time"
 
 	"github.com/dessant/nativemessaging"
-	"github.com/go-vgo/robotgo"
 
+	"buster-client/pkg/input"
 	"buster-client/utils"
 )
 
@@ -99,25 +99,21 @@ func processMessage(msg *message, rsp *response) error {
 
 	if msg.Command == "pressKey" {
 		log.Printf("Data: %s", msg.Data)
-		robotgo.KeyToggle(msg.Data, "down")
+		input.PressKey(msg.Data)
 	} else if msg.Command == "releaseKey" {
 		log.Printf("Data: %s", msg.Data)
-		robotgo.KeyToggle(msg.Data, "up")
+		input.ReleaseKey(msg.Data)
 	} else if msg.Command == "tapKey" {
 		log.Printf("Data: %s", msg.Data)
-		robotgo.KeyTap(msg.Data)
+		input.TapKey(msg.Data)
 	} else if msg.Command == "typeText" {
 		log.Printf("Data: %s", msg.Data)
-		robotgo.TypeStrDelay(msg.Data, 800)
+		input.TypeText(msg.Data)
 	} else if msg.Command == "moveMouse" {
 		log.Printf("X: %d, Y: %d", msg.X, msg.Y)
-		if runtime.GOOS == "windows" {
-			robotgo.MoveMouseSmooth(msg.X, msg.Y, 0.5, 1.0, 0)
-		} else {
-			robotgo.MoveMouseSmooth(msg.X, msg.Y, 1.0, 2.0, 1)
-		}
+		input.MoveMouse(msg.X, msg.Y)
 	} else if msg.Command == "clickMouse" {
-		robotgo.MouseClick()
+		input.ClickMouse()
 	} else if msg.Command == "ping" {
 		rsp.Data = "pong"
 	} else {
